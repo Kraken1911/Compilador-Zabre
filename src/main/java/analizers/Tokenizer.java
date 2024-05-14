@@ -37,9 +37,16 @@ public class Tokenizer {
     }
     public String toString()
     {
-        return "Tokenizer (valor=  "+valor+", tipo=  "+tipo+", Linea";
+        return "Tokenizer (valor=  "+valor+", tipo=  "+tipo+", Linea ="+line+" , columna = "+ column;
         
     }
     
+    public void analisisLexico(String texto , Tokens tk )
+    {
+         String [] textodividido = texto.split("()");
+        for (int i = 0; i < textodividido.length; i++) {
+            
+        }
+    }
            
 }
