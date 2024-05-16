@@ -1,12 +1,17 @@
 package IDE;
 
 import java.awt.*;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
+import Analizers.Alexico;
+import Analizers.Alexico.Token;
+import Analizers.Interprete;
 import utils.Directorio;
 import utils.NumeroLinea;
 
@@ -18,6 +23,7 @@ public class IDE extends javax.swing.JFrame {
 
     NumeroLinea numerolinea;
     Directorio dir;
+    Alexico alex = new Alexico();
 
     /**
      * Creates new form IDE
@@ -240,12 +246,48 @@ public class IDE extends javax.swing.JFrame {
         dir.Abrir(this);
     }
 
-    private void btnCompilarActionPerformed(java.awt.event.ActionEvent evt) {
-       
+   private void btnCompilarActionPerformed(java.awt.event.ActionEvent evt) {
+    jtaCompile.setText(""); // Limpiar el área de texto antes de compilar
+    String input = jtpCode.getText();
+    ArrayList<Alexico.Token> tokens = alex.getTokens(input);
+
+    if (tokens.isEmpty()) {
+        jtaCompile.append("No hay tokens válidos para compilar.\n");
+        return;
     }
 
+    Interprete interprete = new Interprete();
+    interprete.execute(tokens);
+
+    // Capturar la salida del sistema
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    PrintStream printStream = new PrintStream(outputStream);
+    System.setOut(printStream);
+
+    try {
+        interprete.execute(tokens);
+        jtaCompile.append(outputStream.toString());
+    } catch (Exception e) {
+        jtaCompile.append("Error durante la compilación: " + e.getMessage() + "\n");
+    } finally {
+        System.setOut(System.out); // Restaurar la salida estándar
+    }
+}
+
     private void btnTokensActionPerformed(java.awt.event.ActionEvent evt) {
-        // TODO: Implementar la lógica para mostrar los tokens
+       lexer();
+    }
+
+    private void lexer() {
+        String input = jtpCode.getText();
+        ArrayList<Token> tokens = alex.getTokens(input);
+        
+        StringBuilder sb = new StringBuilder();
+        for (Token token : tokens) {
+            sb.append(token.toString()).append("\n");
+        }
+        
+        jtaCompile.setText(sb.toString());
     }
 
     // Variables declaration - do not modify                     

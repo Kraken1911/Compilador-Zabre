@@ -1,51 +1,12 @@
 package Analizers;
+
 import java.util.ArrayList;
-import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Alexico {
-    /**
- * Analizador Léxico
- *
- * Este programa es un analizador léxico que identifica y clasifica tokens en un código fuente
- * de acuerdo con las reglas definidas en el enumerado TokenType.
- *
- * Uso:
- * 1. Ejecuta el programa.
- * 2. Ingresa el código fuente cuando se te solicite.
- * 3. El programa analizará el código fuente y mostrará los tokens encontrados, junto con su tipo y valor.
- *
- * Ejemplo de entrada:
- * ENTRADA(x);
- * ENT y = 10;
- * IMPRIME(y);
- *
- * Salida esperada:
- * Tokens encontrados:
- * (ENTRADA, ENTRADA(x))
- * (ENT, ENT y = 10)
- * (IMPRIME, IMPRIME(y))
- *
- * Nota: El programa solo reconoce los tokens definidos en el enumerado TokenType.
- * Cualquier otro carácter o secuencia de caracteres no reconocida generará una excepción.
- */
 
-
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Ingrese el código fuente: ");
-        String input = scanner.nextLine();
-
-        ArrayList<Token> tokens = getTokens(input);
-
-        System.out.println("\nTokens encontrados:");
-        for (Token token : tokens) {
-            System.out.println(token);
-        }
-    }
-
-    private static ArrayList<Token> getTokens(String input) {
+    public ArrayList<Token> getTokens(String input) {
         ArrayList<Token> tokens = new ArrayList<>();
         int start = 0;
 
@@ -64,27 +25,41 @@ public class Alexico {
                 }
             }
             if (!matched) {
-                throw new IllegalArgumentException("Caracter inválido en la posición " + start);
+                // Detectar identificadores no reservados
+                int end = start;
+                while (end < input.length() && Character.isLetterOrDigit(input.charAt(end))) {
+                    end++;
+                }
+                if (end > start) {
+                    String tokenValue = input.substring(start, end).trim();
+                    tokens.add(new Token(TokenType.IDENTIFIER, tokenValue));
+                    start = end;
+                } else {
+                    System.err.println("Caracter inválido en la posición " + start + ": " + input.charAt(start));
+                    start++;  // Avanzar al siguiente carácter
+                }
             }
         }
         return tokens;
     }
 
-    private enum TokenType {
-        IDENTIFIER("\\b[a-zA-Z][a-zA-Z0-9]*\\s*;"),
-        ENTRADA("\\b(ENTRADA|entrada)\\s*\\(\\s*([a-zA-Z][a-zA-Z0-9]*)\\s*\\)\\s*;"),
-        RETORNA("\\b(RETORNA|retorna)\\s*\\(\\s*([a-zA-Z0-9\\s+\\-\\*/]*)\\s*\\)\\s*;"),
-        IMPRIME("\\b(IMPRIME|imprime)\\s*\\(\\s*([a-zA-Z0-9\\s+\\-\\*/\"']*)\\s*\\)\\s*;"),
-        SI("\\b(SI|si)\\s*\\(\\s*([a-zA-Z][a-zA-Z0-9]*)\\s*\\)\\s*\\b(HAZ|haz)\\b\\s*\\{([a-zA-Z0-9\\s]*)\\}\\s*;"),
-        SINO("\\b(SINO|sino)\\s*\\{([a-zA-Z0-9\\s]*)\\}\\s*;"),
-        CAD("\\b(CAD|cad)\\s*([a-zA-Z][a-zA-Z0-9]*\\s*=\\s*\"[^\"]*\")\\s*;"),
-        ENT("\\b(ENT|ent)\\s*([a-zA-Z][a-zA-Z0-9]*\\s*=\\s*\\d+)\\s*;"),
-        BOOL("\\b(BOOL|bool)\\s*([a-zA-Z][a-zA-Z0-9]*\\s*=\\s*(true|false))\\s*;"),
-        DEC("\\b(DEC|dec)\\s*([a-zA-Z][a-zA-Z0-9]*\\s*=\\s*\\d+\\.\\d+)\\s*;");
+    public enum TokenType {
+        IDENTIFIER("\\b[a-zA-Z][a-zA-Z0-9]*\\b"),
+        ENTRADA("\\b(ENTRADA)\\s*\\(\\s*([a-zA-Z][a-zA-Z0-9]*)\\s*\\)\\s*;"),
+        RETORNA("\\b(RETORNA)\\s*\\(\\s*([a-zA-Z0-9\\s+\\-\\*/]*)\\s*\\)\\s*;"),
+        IMPRIME("\\b(IMPRIME)\\s*\\(\\s*([a-zA-Z0-9\\s+\\-\\*/\"'()]*)\\s*\\)\\s*;"),
+        SI("\\b(SI)\\s*\\(\\s*([a-zA-Z][a-zA-Z0-9\\s+\\-\\*/><=!&|]*)\\s*\\)\\s*\\b(HAZ)\\b\\s*\\{([a-zA-Z0-9\\s+\\-\\*/\"'();]*)\\}\\s*;"),
+        SINO("\\b(SINO)\\s*\\{([a-zA-Z0-9\\s+\\-\\*/\"'();]*)\\}\\s*;"),
+        CAD("\\b(CAD)\\s*([a-zA-Z][a-zA-Z0-9]*\\s*=\\s*\"[^\"]*\")\\s*;"),
+        ENT("\\b(ENT)\\s*([a-zA-Z][a-zA-Z0-9]*\\s*=\\s*\\d+)\\s*;"),
+        BOOL("\\b(BOOL)\\s*([a-zA-Z][a-zA-Z0-9]*\\s*=\\s*(true|false))\\s*;"),
+        DEC("\\b(DEC)\\s*([a-zA-Z][a-zA-Z0-9]*\\s*=\\s*\\d+\\.\\d+)\\s*;"),
+        ARITHMETIC_OP("\\b([a-zA-Z][a-zA-Z0-9]*\\s*[+\\-*/]\\s*[a-zA-Z][a-zA-Z0-9]*)\\s*;");
+
         private final Pattern pattern;
 
         TokenType(String regex) {
-            this.pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            this.pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
         }
 
         public Pattern getPattern() {
@@ -92,9 +67,9 @@ public class Alexico {
         }
     }
 
-    private static class Token {
-        private final TokenType type;
-        private final String value;
+    public static class Token {
+        public final TokenType type;
+        public final String value;
 
         public Token(TokenType type, String value) {
             this.type = type;
@@ -103,7 +78,10 @@ public class Alexico {
 
         @Override
         public String toString() {
-            return "(" + type + ", " + value + ")";
+            return "Token{" +
+                    "type='" + type + '\'' +
+                    ", value='" + value + '\'' +
+                    '}';
         }
     }
 }
