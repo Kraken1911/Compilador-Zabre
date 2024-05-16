@@ -1,6 +1,5 @@
 package IDE;
 
-import analizers.Errors;
 import java.awt.*;
 import java.util.ArrayList;
 import javax.swing.text.AttributeSet;
@@ -132,12 +131,6 @@ public class IDE extends javax.swing.JFrame {
     }
 
     
-
-    private void mostrarErrores(ArrayList<Errors> errores) {
-        for (Errors error : errores) {
-            jtaCompile.append("Error (" + error.getTipe() + ") en línea " + error.getLine() + ": " + error.getValor() + "\n");
-        }
-    }
 
     // <editor-fold defaultstate="collapsed" desc="Generated Code">
     private void initComponents() {
