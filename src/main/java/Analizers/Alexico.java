@@ -9,8 +9,8 @@ public class Alexico {
     public ArrayList<Token> getTokens(String input) {
         ArrayList<Token> tokens = new ArrayList<>();
         int start = 0;
-
-        while (start < input.length()) {
+//
+        while (start < input.length()) {// mientras sea menor a la longitud del texto 
             boolean matched = false;
             for (TokenType tokenType : TokenType.values()) {
                 Pattern pattern = tokenType.getPattern();

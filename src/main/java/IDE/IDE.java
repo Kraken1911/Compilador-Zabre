@@ -24,6 +24,7 @@ public class IDE extends javax.swing.JFrame {
     NumeroLinea numerolinea;
     Directorio dir;
     Alexico alex = new Alexico();
+    
 
     /**
      * Creates new form IDE
@@ -81,6 +82,7 @@ public class IDE extends javax.swing.JFrame {
         final AttributeSet attMetodos = cont.addAttribute(cont.getEmptySet(), StyleConstants.Foreground, new Color(0, 249, 0)); // Verde
         final AttributeSet attEstructurasControl = cont.addAttribute(cont.getEmptySet(), StyleConstants.Foreground, new Color(249, 0, 0)); // Rojo
         final AttributeSet attOtros = cont.addAttribute(cont.getEmptySet(), StyleConstants.Foreground, new Color(144, 0, 144)); // Púrpura
+        final AttributeSet attNumeros = cont.addAttribute(cont.getEmptySet(), StyleConstants.Foreground, new Color(255, 192, 0));
 
         // Estilo del documento
         DefaultStyledDocument doc = new DefaultStyledDocument() {
@@ -99,20 +101,22 @@ public class IDE extends javax.swing.JFrame {
                     if (!word.isEmpty()) {
                         int start = startLine + lineOffset;
                         int end = start + word.length();
-                        applyStyleToReservedWord(word, start, end, attVariables, attMetodos, attEstructurasControl, attOtros);
+                        applyStyleToReservedWord(word, start, end, attVariables, attMetodos, attEstructurasControl, attOtros,attNumeros);
                     }
                     lineOffset += word.length() + 1; // +1 for the non-word character
                 }
             }
 
-            private void applyStyleToReservedWord(String word, int start, int end, AttributeSet attVariables, AttributeSet attMetodos, AttributeSet attEstructurasControl, AttributeSet attOtros) {
+            private void applyStyleToReservedWord(String word, int start, int end, AttributeSet attVariables, AttributeSet attMetodos, AttributeSet attEstructurasControl, AttributeSet attOtros, AttributeSet attNumeros) {
                 if (isVariable(word)) {
                     setCharacterAttributes(start, end - start, attVariables, false);
                 } else if (isMetodo(word)) {
                     setCharacterAttributes(start, end - start, attMetodos, false);
                 } else if (isEstructuraControl(word)) {
                     setCharacterAttributes(start, end - start, attEstructurasControl, false);
-                } else {
+                } else if(isNumero(word)){
+                    setCharacterAttributes(start, end - start, attNumeros, false);
+                }else {
                     setCharacterAttributes(start, end - start, attOtros, false);
                 }
             }
@@ -128,6 +132,10 @@ public class IDE extends javax.swing.JFrame {
             private boolean isEstructuraControl(String word) {
                 return word.matches("\\b(SI|HAZ|SINO|BUCLE)\\b");
             }
+            private boolean isNumero(String word) {
+                return word.matches("\\d+");
+            }
+            
         };
 
         // Aplicar el estilo al JTextPane
@@ -254,6 +262,10 @@ public class IDE extends javax.swing.JFrame {
     if (tokens.isEmpty()) {
         jtaCompile.append("No hay tokens válidos para compilar.\n");
         return;
+    }else{
+        // aqui va todo el parser 
+        // yo habia ponido un parser aqui 
+        jtaCompile.append("los tokens son :.\n");
     }
 
     Interprete interprete = new Interprete();

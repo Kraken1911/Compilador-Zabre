@@ -6,11 +6,17 @@
     "configurations": [
         {
             "type": "java",
+            "name": "ASintactico",
+            "request": "launch",
+            "mainClass": "Analizers.ASintactico",
+            "projectName": "Compilador"
+        },
+        {
+            "type": "java",
             "name": "Launch Java Program",
             "request": "launch",
             "mainClass": ""
         },
-
         {
             "type": "java",
             "name": "Attach",
