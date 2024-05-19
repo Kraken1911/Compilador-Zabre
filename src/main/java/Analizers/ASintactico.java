@@ -1,4 +1,4 @@
-package Analizers;
+/*package Analizers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,9 +6,11 @@ import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import Analizers.Alexico.Token;
+
 public class ASintactico {
 
-    private List<Token> tokens;
+    private ArrayList<Token> tokens;
     private int currentIndex;
 
     public boolean parse(String input) {
@@ -189,3 +191,5 @@ public class ASintactico {
         System.out.println("Parsing result: " + result);
     }
 }
+
+*/

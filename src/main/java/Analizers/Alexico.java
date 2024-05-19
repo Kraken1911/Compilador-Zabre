@@ -9,8 +9,8 @@ public class Alexico {
     public ArrayList<Token> getTokens(String input) {
         ArrayList<Token> tokens = new ArrayList<>();
         int start = 0;
-//
-        while (start < input.length()) {// mientras sea menor a la longitud del texto 
+
+        while (start < input.length()) {
             boolean matched = false;
             for (TokenType tokenType : TokenType.values()) {
                 Pattern pattern = tokenType.getPattern();
@@ -25,18 +25,19 @@ public class Alexico {
                 }
             }
             if (!matched) {
-                // Detectar identificadores no reservados
                 int end = start;
                 while (end < input.length() && Character.isLetterOrDigit(input.charAt(end))) {
                     end++;
                 }
                 if (end > start) {
                     String tokenValue = input.substring(start, end).trim();
-                    tokens.add(new Token(TokenType.IDENTIFIER, tokenValue));
+                    // Cambiamos de IDENTIFIER a VARIABLE para los tokens que coincidan con el patrón de variables.
+                    Token token = new Token(TokenType.IDENTIFIER, tokenValue);
+                    tokens.add(token);
                     start = end;
                 } else {
-                    System.err.println("Caracter inválido en la posición " + start + ": " + input.charAt(start));
-                    start++;  // Avanzar al siguiente carácter
+                    System.err.println("Caracter de espacio en el indice: " + start);
+                    start++;
                 }
             }
         }
@@ -44,22 +45,35 @@ public class Alexico {
     }
 
     public enum TokenType {
-        IDENTIFIER("\\b[a-zA-Z][a-zA-Z0-9]*\\b"),
-        ENTRADA("\\b(ENTRADA)\\s*\\(\\s*([a-zA-Z][a-zA-Z0-9]*)\\s*\\)\\s*;"),
-        RETORNA("\\b(RETORNA)\\s*\\(\\s*([a-zA-Z0-9\\s+\\-\\*/]*)\\s*\\)\\s*;"),
-        IMPRIME("\\b(IMPRIME)\\s*\\(\\s*([a-zA-Z0-9\\s+\\-\\*/\"'()]*)\\s*\\)\\s*;"),
-        SI("\\b(SI)\\s*\\(\\s*([a-zA-Z][a-zA-Z0-9\\s+\\-\\*/><=!&|]*)\\s*\\)\\s*\\b(HAZ)\\b\\s*\\{([a-zA-Z0-9\\s+\\-\\*/\"'();]*)\\}\\s*;"),
-        SINO("\\b(SINO)\\s*\\{([a-zA-Z0-9\\s+\\-\\*/\"'();]*)\\}\\s*;"),
-        CAD("\\b(CAD)\\s*([a-zA-Z][a-zA-Z0-9]*\\s*=\\s*\"[^\"]*\")\\s*;"),
-        ENT("\\b(ENT)\\s*([a-zA-Z][a-zA-Z0-9]*\\s*=\\s*\\d+)\\s*;"),
-        BOOL("\\b(BOOL)\\s*([a-zA-Z][a-zA-Z0-9]*\\s*=\\s*(true|false))\\s*;"),
-        DEC("\\b(DEC)\\s*([a-zA-Z][a-zA-Z0-9]*\\s*=\\s*\\d+\\.\\d+)\\s*;"),
-        ARITHMETIC_OP("\\b([a-zA-Z][a-zA-Z0-9]*\\s*[+\\-*/]\\s*[a-zA-Z][a-zA-Z0-9]*)\\s*;");
+        IDENTIFIER("[a-z][a-z0-9_]*"), // Solo identificadores en minúsculas
+        VARIABLE("[a-z][a-z0-9_]*"), // Solo variables en minúsculas
+        ENTRADA("ENTRADA"),
+        RETORNA("RETORNA"),
+        IMPRIME("IMPRIME"),
+        SI("SI"),
+        HAZ("HAZ"),
+        SINO("SINO"),
+        BUCLE("BUCLE"),
+        ENT("ENT"),
+        DEC("DEC"),
+        CADENA("CADENA"),
+        BOOL("BOOL"),
+        ASSIGN_OP("=="),
+        ARITHMETIC_OP("[+\\-*/=<>!]+"),
+        NUMBER("\\b\\d+\\.?\\d*\\b"),
+        STRING("\"[^\"]*\""),
+        LPAREN("\\("),
+        RPAREN("\\)"),
+        LBRACE("\\{"),
+        RBRACE("\\}"),
+        SEMICOLON(";"),
+        COMMA(","),
+        DEVUELVE("DEVUELVE");
 
         private final Pattern pattern;
 
         TokenType(String regex) {
-            this.pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+            this.pattern = Pattern.compile(regex);
         }
 
         public Pattern getPattern() {
@@ -79,7 +93,7 @@ public class Alexico {
         @Override
         public String toString() {
             return "Token{" +
-                    "type='" + type + '\'' +
+                    "type=" + type +
                     ", value='" + value + '\'' +
                     '}';
         }
