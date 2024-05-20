@@ -45,8 +45,10 @@ public class Alexico {
     }
 
     public enum TokenType {
-        IDENTIFIER("[a-z][a-z0-9_]*"), // Solo identificadores en minúsculas
-        VARIABLE("[a-z][a-z0-9_]*"), // Solo variables en minúsculas
+    	BOOLEAN_LITERAL("\\b(true|false)\\b"),
+        WRONG_ASSIGNMENT_BOOLEAN("\\b(true|false)[a-zA-Z0-9_]+|[a-zA-Z0-9_]+(true|false)\\b"),
+        VARIABLE("[a-z][a-z0-9_]*"),
+        IDENTIFIER("(?!(true|false)\\b)[A-Z][A-Z0-9_]*"),
         ENTRADA("ENTRADA"),
         RETORNA("RETORNA"),
         IMPRIME("IMPRIME"),
@@ -68,7 +70,7 @@ public class Alexico {
         RBRACE("\\}"),
         SEMICOLON(";"),
         COMMA(","),
-        DEVUELVE("DEVUELVE");
+        DEVUELVE("DEVUELVE");  
 
         private final Pattern pattern;
 
