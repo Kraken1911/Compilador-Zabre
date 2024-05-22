@@ -1,16 +1,19 @@
 package Analizers;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class Parser {
     private List<Alexico.Token> tokens;
     private int currentTokenIndex;
     private int currentLine;
+    private Set<String> declaredVariables; // Para llevar el registro de las variables declaradas
     public boolean verificado = false;
 
     public Parser() {
-        // Constructor vacío
+        declaredVariables = new HashSet<>(); // Inicializar el conjunto de variables declaradas
     }
 
     // Método principal para iniciar el análisis sintáctico
@@ -22,7 +25,7 @@ public class Parser {
             // Inicia el análisis del programa
             parseProgram();
             verificado = true; // Indica que el análisis fue exitoso
-            return "Los tokens del arrayList son válidos.";
+            return "Los tokens de la expresión son válidos.";
         } catch (RuntimeException e) {
             return e.getMessage(); // Devuelve el mensaje de error en caso de excepción
         }
@@ -33,7 +36,7 @@ public class Parser {
         if (currentTokenIndex < tokens.size()) {
             return tokens.get(currentTokenIndex);
         } else {
-            throw new RuntimeException("Error: Se esperaba un token, pero se encontró el fin de los tokens en la línea " + currentLine + ".");
+            throw new RuntimeException("Error: Se esperaba un token, pero se encontró el fin de los tokens ");
         }
     }
 
@@ -69,6 +72,9 @@ public class Parser {
             case IDENTIFIER:
                 parseVariableDeclaration();
                 break;
+            case BOOL:
+                parseBoolStatement();
+                break;
             case SI:
                 parseIfStatement();
                 break;
@@ -81,6 +87,9 @@ public class Parser {
             case RETORNA:
                 parseReturnStatement();
                 break;
+            case DEVUELVE:
+                parseDevuelveStatement();
+                break;
             default:
                 throw new RuntimeException("Error: Token inesperado en declaración: " + token.value + " en la línea " + currentLine + ".");
         }
@@ -91,13 +100,72 @@ public class Parser {
         if (!match(Alexico.TokenType.IDENTIFIER)) {
             throw new RuntimeException("Error: Se esperaba un tipo de dato en la línea " + currentLine + ".");
         }
+        
+        Alexico.Token variableToken = currentToken();
         if (!match(Alexico.TokenType.VARIABLE)) {
             throw new RuntimeException("Error: Se esperaba un identificador en la línea " + currentLine + ".");
         }
+        declaredVariables.add(variableToken.value); // Registrar la variable declarada
+        
         if (!match(Alexico.TokenType.ASSIGN_OP)) {
             throw new RuntimeException("Error: Se esperaba un operador de asignación '==' en la línea " + currentLine + ".");
         }
         parseExpression();
+        if (!match(Alexico.TokenType.SEMICOLON)) {
+            throw new RuntimeException("Error: Se esperaba ';' en la línea " + currentLine + ".");
+        }
+    }
+
+    // Analiza una declaración de variable booleana
+    private void parseBoolStatement() {
+        if (!match(Alexico.TokenType.BOOL)) {
+            throw new RuntimeException("Error: Se esperaba 'BOOL' en la línea " + currentLine + ".");
+        }
+        
+        Alexico.Token variableToken = currentToken();
+        if (!match(Alexico.TokenType.VARIABLE)) {
+            throw new RuntimeException("Error: Se esperaba un identificador en la línea " + currentLine + ".");
+        }
+        declaredVariables.add(variableToken.value); // Registrar la variable declarada
+        
+        if (!match(Alexico.TokenType.ASSIGN_OP)) {
+            throw new RuntimeException("Error: Se esperaba un operador de asignación '==' en la línea " + currentLine + ".");
+        }
+        if (!match(Alexico.TokenType.BOOLEAN_LITERAL)) {
+            throw new RuntimeException("Error: Se esperaba un literal booleano 'true' o 'false' en la línea " + currentLine + ".");
+        }
+        if (!match(Alexico.TokenType.SEMICOLON)) {
+            throw new RuntimeException("Error: Se esperaba ';' en la línea " + currentLine + ".");
+        }
+    }
+
+    // Analiza una declaración 'DEVUELVE IMPRIME'
+    private void parseDevuelveStatement() {
+        if (!match(Alexico.TokenType.DEVUELVE)) {
+            throw new RuntimeException("Error: Se esperaba 'DEVUELVE' en la línea " + currentLine + ".");
+        }
+        if (!match(Alexico.TokenType.IMPRIME)) {
+            throw new RuntimeException("Error: Se esperaba 'IMPRIME' en la línea " + currentLine + ".");
+        }
+        if (!match(Alexico.TokenType.LPAREN)) {
+            throw new RuntimeException("Error: Se esperaba '(' en la línea " + currentLine + ".");
+        }
+        
+        if (currentToken().type == Alexico.TokenType.STRING) {
+            advanceToken();
+        } else if (currentToken().type == Alexico.TokenType.VARIABLE) {
+            String variableName = currentToken().value;
+            if (!declaredVariables.contains(variableName)) {
+                throw new RuntimeException("Error: Variable no declarada '" + variableName + "' en la línea " + currentLine + ".");
+            }
+            advanceToken();
+        } else {
+            throw new RuntimeException("Error: Se esperaba un string o una variable en la línea " + currentLine + ".");
+        }
+        
+        if (!match(Alexico.TokenType.RPAREN)) {
+            throw new RuntimeException("Error: Se esperaba ')' en la línea " + currentLine + ".");
+        }
         if (!match(Alexico.TokenType.SEMICOLON)) {
             throw new RuntimeException("Error: Se esperaba ';' en la línea " + currentLine + ".");
         }
@@ -202,32 +270,42 @@ public class Parser {
     }
 
     // Genera el árbol sintáctico para una línea específica
-    public String creacionArbol(boolean verificación, int numLinea, ArrayList<Alexico.Token> tokens) {
+    public String creacionArbol(boolean verificación, ArrayList<Alexico.Token> tokens) {
         if (!verificación) {
             return "No se puede crear el árbol sintáctico.";
         }
 
-        // Contar la cantidad de líneas basándonos en el token SEMICOLON
-        int lineaActual = 1;
+        // Inicializar el StringBuilder para construir la representación de todos los árboles
+        StringBuilder resultado = new StringBuilder();
+
+        // Variables para manejar la separación de las líneas de instrucciones
         int inicioTokensLinea = 0;
+        int numLinea = 1;
 
         for (int i = 0; i < tokens.size(); i++) {
             if (tokens.get(i).type == Alexico.TokenType.SEMICOLON) {
-                if (lineaActual == numLinea) {
-                    // Extraer los tokens correspondientes a la línea especificada
-                    List<Alexico.Token> lineaTokens = tokens.subList(inicioTokensLinea, i + 1);
-                    return generarArbol(lineaTokens);
-                }
-                lineaActual++;
+                // Extraer los tokens correspondientes a la línea actual
+                List<Alexico.Token> lineaTokens = tokens.subList(inicioTokensLinea, i + 1);
+                String arbol = generarArbol(lineaTokens);
+                
+                // Añadir el árbol al resultado
+                resultado.append("Línea ").append(numLinea).append(":\n");
+                resultado.append(arbol).append("\n");
+
+                // Incrementar el número de línea y actualizar el inicio para la siguiente línea
+                numLinea++;
                 inicioTokensLinea = i + 1;
             }
         }
 
-        // Si se llega aquí, significa que la línea especificada no existe
-        return "No existe dicha línea indicada.";
+        // Si no hay líneas válidas
+        if (resultado.length() == 0) {
+            return "No se encontraron líneas válidas.";
+        }
+
+        return resultado.toString();
     }
 
-    // Genera una representación en forma de árbol de la lista de tokens proporcionada
     private String generarArbol(List<Alexico.Token> tokensLinea) {
         // Inicializar el árbol sintáctico como una cadena
         StringBuilder arbol = new StringBuilder();
@@ -240,8 +318,7 @@ public class Parser {
 
         return arbol.toString();
     }
-
-    // Convierte el árbol sintáctico a formato DOT para visualización gráfica
+    
     public String convertirArbolAFormatoVisual(String arbol) {
         String[] lineas = arbol.split("\n");
         StringBuilder dot = new StringBuilder();
@@ -255,37 +332,39 @@ public class Parser {
 
         // Para la construcción jerárquica del árbol
         int nodeCounter = 0;
-        String parentNode = "node" + nodeCounter++;
-        dot.append(parentNode).append(" [label=\"Statement\"];\n");
-        nodos.add(parentNode);
-
-        String currentParent = parentNode;
+        String parentNode = "";
+        String currentParent = "";
 
         for (String linea : lineas) {
             linea = linea.trim();
             if (linea.isEmpty()) continue;
 
-            String nodo = "node" + nodeCounter++;
-            String etiqueta = linea.contains(" (") ? linea.substring(0, linea.indexOf(" (")) : linea;
+            if (linea.startsWith("Línea")) {
+                // Añadir un nuevo subárbol
+                parentNode = "node" + nodeCounter++;
+                dot.append(parentNode).append(" [label=\"").append(linea).append("\"];\n");
+                currentParent = parentNode;
+                nodos.add(parentNode);
+            } else if (linea.startsWith("Arbol Sintáctico:")) {
+                // Reiniciar para un nuevo árbol
+                parentNode = "node" + nodeCounter++;
+                dot.append(parentNode).append(" [label=\"Statement\"];\n");
+                currentParent = parentNode;
+                nodos.add(parentNode);
+            } else {
+                String nodo = "node" + nodeCounter++;
+                String etiqueta = linea.contains(" (") ? linea.substring(0, linea.indexOf(" (")) : linea;
 
-            switch (etiqueta) {
-                case "=":
-                case "==":
-                case "+":
-                case "-":
-                case "*":
-                case "/":
-                case ";":
-                    nodos.add(nodo);
-                    dot.append(nodo).append(" [label=\"").append(etiqueta).append("\"];\n");
-                    conexiones.add(currentParent + " -> " + nodo);
+                nodos.add(nodo);
+                dot.append(nodo).append(" [label=\"").append(etiqueta).append("\"];\n");
+                conexiones.add(currentParent + " -> " + nodo);
+
+                // Actualizar el nodo padre actual solo si no es un símbolo
+                if (!etiqueta.equals("=") && !etiqueta.equals("==") && !etiqueta.equals("+") &&
+                    !etiqueta.equals("-") && !etiqueta.equals("*") && !etiqueta.equals("/") &&
+                    !etiqueta.equals(";")) {
                     currentParent = nodo;
-                    break;
-                default:
-                    nodos.add(nodo);
-                    dot.append(nodo).append(" [label=\"").append(etiqueta).append("\"];\n");
-                    conexiones.add(currentParent + " -> " + nodo);
-                    break;
+                }
             }
         }
 
